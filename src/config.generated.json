@@ -1,0 +1,11 @@
+{
+  "chainId": 200010,
+  "proxyUrl": "https://hadrian.testnet.romeprotocol.xyz/",
+  "solanaRpc": "https://api.devnet.solana.com",
+  "solanaCluster": "devnet",
+  "programId": "RPTWwELXAY4KC9ZPHhaxp7Sq1hHtU3HNEgLbSegCcWf",
+  "wusdc": "0xbce339ba4c3a8de3bb8af1c5539e6ac11da3112d",
+  "usdcMint": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  "explorerUrl": "https://via-hadrian.testnet.romeprotocol.xyz/",
+  "slotlock": null
+}

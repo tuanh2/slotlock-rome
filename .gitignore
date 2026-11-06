@@ -3,7 +3,6 @@ dist
 .env
 .env.*
 *.local
-src/config.generated.json
 artifacts
 cache
 _zip
