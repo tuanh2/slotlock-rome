@@ -126,7 +126,7 @@ export const CheckInPage: React.FC<CheckInPageProps> = ({
               target="_blank"
               rel="noreferrer"
               className="btn-secondary"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#ffffff", fontSize: "0.86rem" }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255, 255, 255, 0.06)", fontSize: "0.86rem" }}
             >
               <span>View On-Chain Settlement ({truncate(successResult.txHash)})</span>
               <ExternalLink size={14} />

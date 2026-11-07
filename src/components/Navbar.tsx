@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Lock, Ticket, Plus, Compass, Wallet as WalletIcon, ChevronDown, CheckCircle2 } from "lucide-react";
+import { Lock, Ticket, Plus, Compass, Wallet as WalletIcon, ChevronDown, CheckCircle2, Zap } from "lucide-react";
 import type { Hex } from "viem";
 import type { Wallet as SolanaWalletItem } from "../../lib/solanaWallet";
 
@@ -42,23 +42,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       <header className="navbar">
         <div className="container nav-inner">
           <div className="logo-group" onClick={() => setCurrentTab("explore")}>
-            <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              background: "#121417",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff"
-            }}>
-              <Lock size={18} strokeWidth={2.5} />
+            <div className="logo-icon">
+              <Zap size={20} strokeWidth={2.5} />
             </div>
             <span>SlotLock</span>
             <span className="logo-badge">ROME</span>
           </div>
 
-          <nav className="nav-links">
+          <div className="nav-links">
             <button
               className={`nav-btn ${currentTab === "explore" ? "active" : ""}`}
               onClick={() => setCurrentTab("explore")}
@@ -68,32 +59,90 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
-              className={`nav-btn ${currentTab === "tickets" ? "active" : ""}`}
-              onClick={() => setCurrentTab("tickets")}
-            >
-              <Ticket size={17} />
-              <span>My Tickets</span>
-            </button>
-
-            <button
               className={`nav-btn ${currentTab === "create" ? "active" : ""}`}
               onClick={() => setCurrentTab("create")}
             >
               <Plus size={17} />
               <span>Create Event</span>
             </button>
-          </nav>
 
-          <div>
+            <button
+              className={`nav-btn ${currentTab === "my-tickets" ? "active" : ""}`}
+              onClick={() => setCurrentTab("my-tickets")}
+            >
+              <Ticket size={17} />
+              <span>My Tickets</span>
+            </button>
+          </div>
+
+          {/* Wallet Section */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Network Badge */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: "var(--radius-full)",
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid var(--border-color)",
+                fontSize: "0.78rem",
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "var(--success)",
+                  boxShadow: "0 0 8px rgba(16, 185, 129, 0.6)",
+                }}
+              />
+              <span style={{ fontWeight: 600 }}>Hadrian 200010</span>
+            </div>
+
             {isConnected ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div className="wallet-pill" onClick={() => setShowWalletModal(true)} style={{ cursor: "pointer" }}>
-                  <div className="wallet-dot" />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div
+                  className="mono-addr"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 12px",
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setShowWalletModal(true)}
+                >
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: evmAddr ? "var(--rome-flame)" : "#9945FF",
+                    }}
+                  />
                   <span>
-                    {evmAddr ? `MetaMask (${truncate(evmAddr)})` : `Solana (${truncate(solPk)})`}
+                    {evmAddr ? truncate(evmAddr) : truncate(solPk)}
                   </span>
-                  <ChevronDown size={14} color="#888" />
+                  {solSynth && (
+                    <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                      (Synth: {truncate(solSynth)})
+                    </span>
+                  )}
+                  <ChevronDown size={14} color="var(--text-muted)" />
                 </div>
+                <button
+                  className="btn-secondary"
+                  style={{ padding: "7px 12px", fontSize: "0.82rem" }}
+                  onClick={onDisconnect}
+                >
+                  Disconnect
+                </button>
               </div>
             ) : (
               <button
@@ -109,144 +158,152 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </header>
 
-      {/* Wallet Connection Modal */}
+      {/* Wallet Selector Modal */}
       {showWalletModal && (
         <div className="modal-overlay" onClick={() => setShowWalletModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h3 style={{ fontSize: "1.2rem", fontWeight: 700 }}>
-                {isConnected ? "Connected Wallet" : "Connect on Rome"}
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 440 }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                Connect to Rome
               </h3>
               <button
                 onClick={() => setShowWalletModal(false)}
-                style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#888" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  fontSize: "1.2rem",
+                  cursor: "pointer",
+                }}
               >
                 ✕
               </button>
             </div>
 
-            {isConnected ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ background: "var(--bg-subtle)", padding: 16, borderRadius: "var(--radius-md)" }}>
-                  <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: 4 }}>
-                    {evmAddr ? "EVM Address (MetaMask Lane)" : "Solana Wallet & Rome Synthetic Address"}
-                  </div>
-                  <div className="mono-addr" style={{ wordBreak: "break-all", fontSize: "0.88rem" }}>
-                    {evmAddr || solPk}
-                  </div>
-                  {solSynth && (
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Synthetic EVM:</div>
-                      <div className="mono-addr" style={{ fontSize: "0.78rem" }}>{solSynth}</div>
-                    </div>
-                  )}
-                </div>
+            <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.5 }}>
+              Choose your wallet to interact with SlotLock on Rome Hadrian Testnet. Dual-lane supports MetaMask (EVM) and Solana wallets with synthetic derivation.
+            </p>
 
-                <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                  Network: <b>Rome Hadrian Testnet</b> (Chain ID 200010)
-                </div>
-
-                <button
-                  className="btn-danger"
-                  style={{ width: "100%", justifyContent: "center", padding: "10px" }}
-                  onClick={() => {
-                    onDisconnect();
-                    setShowWalletModal(false);
-                  }}
-                >
-                  Disconnect Wallet
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", marginBottom: 6 }}>
-                  Rome runs real EVM contracts natively inside Solana. Both EVM and Solana wallets access the exact same state.
-                </p>
-
-                {/* EVM Lane */}
-                <button
-                  className="card"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: 16,
-                    cursor: "pointer",
-                    textAlign: "left"
-                  }}
-                  onClick={() => {
-                    onConnectEvm();
-                    setShowWalletModal(false);
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* EVM Lane Option */}
+              <button
+                onClick={() => {
+                  onConnectEvm();
+                  setShowWalletModal(false);
+                }}
+                className="card"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px 20px",
+                  cursor: "pointer",
+                  border: evmAddr ? "1px solid var(--rome-flame)" : "1px solid var(--border-color)",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div
+                    style={{
                       width: 40,
                       height: 40,
-                      borderRadius: 10,
-                      background: "#fef3c7",
+                      borderRadius: 12,
+                      background: "rgba(255, 72, 0, 0.15)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: "1.2rem"
-                    }}>
-                      🦊
+                      color: "var(--rome-flame)",
+                      fontSize: "1.2rem",
+                    }}
+                  >
+                    🦊
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: "0.98rem", color: "var(--text-primary)" }}>
+                      MetaMask / EVM Lane
                     </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>MetaMask / EVM Wallet</div>
-                      <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Connect to Rome Hadrian (EVM lane)</div>
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                      Chain ID: 200010 (Rome Hadrian)
                     </div>
                   </div>
-                  <span className="badge badge-blue">EVM</span>
-                </button>
+                </div>
+                {evmAddr && <CheckCircle2 size={18} color="var(--rome-flame)" />}
+              </button>
 
-                {/* Solana Lane */}
-                {solWallets.length > 0 ? (
-                  solWallets.map((w, idx) => (
-                    <button
-                      key={idx}
-                      className="card"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: 16,
-                        cursor: "pointer",
-                        textAlign: "left"
-                      }}
-                      onClick={() => {
-                        onConnectSol(w);
-                        setShowWalletModal(false);
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 10,
-                          background: "#ede9fe",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "1.2rem"
-                        }}>
+              {/* Solana Wallets (Standard) */}
+              {solWallets.length > 0 ? (
+                solWallets.map((w) => (
+                  <button
+                    key={w.name}
+                    onClick={() => {
+                      onConnectSol(w);
+                      setShowWalletModal(false);
+                    }}
+                    className="card"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "16px 20px",
+                      cursor: "pointer",
+                      border: solPk ? "1px solid #9945FF" : "1px solid var(--border-color)",
+                      background: "rgba(255, 255, 255, 0.03)",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      {w.icon ? (
+                        <img src={w.icon} alt={w.name} style={{ width: 38, height: 38, borderRadius: 10 }} />
+                      ) : (
+                        <div
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: 10,
+                            background: "rgba(153, 69, 255, 0.15)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#9945FF",
+                            fontSize: "1.2rem",
+                          }}
+                        >
                           🟣
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>{w.name} (Solana)</div>
-                          <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Signs with Solana key over shared state</div>
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: "0.98rem", color: "var(--text-primary)" }}>
+                          {w.name} (Solana Lane)
+                        </div>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                          Auto-derives synthetic Rome address
                         </div>
                       </div>
-                      <span className="badge badge-green">Solana</span>
-                    </button>
-                  ))
-                ) : (
-                  <div style={{ background: "var(--bg-subtle)", padding: 14, borderRadius: "var(--radius-md)", fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                    💡 Install <b>Solflare</b> or a Wallet Standard Solana wallet to experience the native Solana lane on devnet.
-                  </div>
-                )}
-              </div>
-            )}
+                    </div>
+                    {solPk && <CheckCircle2 size={18} color="#9945FF" />}
+                  </button>
+                ))
+              ) : (
+                <div
+                  style={{
+                    padding: "14px 18px",
+                    borderRadius: "var(--radius-md)",
+                    background: "rgba(255, 255, 255, 0.02)",
+                    border: "1px dashed var(--border-color)",
+                    fontSize: "0.82rem",
+                    color: "var(--text-muted)",
+                    textAlign: "center",
+                  }}
+                >
+                  No Solana Wallet Standard extension detected (e.g. Solflare). You can use MetaMask EVM.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

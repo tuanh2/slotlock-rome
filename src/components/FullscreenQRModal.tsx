@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import QRCode from "qrcode";
-import { X, RefreshCw, ShieldCheck, Clock, ExternalLink } from "lucide-react";
+import { X, RefreshCw, ShieldCheck, Clock, ExternalLink, Zap } from "lucide-react";
 import type { EventData } from "../../lib/slotlock";
 import type { RomeConfig } from "../../lib/config";
 
@@ -42,10 +42,10 @@ export const FullscreenQRModal: React.FC<FullscreenQRModalProps> = ({
 
       if (canvasRef.current) {
         await QRCode.toCanvas(canvasRef.current, url, {
-          width: 320,
+          width: 330,
           margin: 2,
           color: {
-            dark: "#0f1115",
+            dark: "#090a0d",
             light: "#ffffff",
           },
         });
@@ -76,59 +76,73 @@ export const FullscreenQRModal: React.FC<FullscreenQRModalProps> = ({
   return (
     <div className="qr-fullscreen">
       {/* Top Bar */}
-      <div style={{ position: "absolute", top: 24, right: 28 }}>
+      <div style={{ position: "absolute", top: 28, right: 32 }}>
         <button
           onClick={onClose}
           style={{
-            background: "rgba(255,255,255,0.1)",
-            border: "none",
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.15)",
             borderRadius: "50%",
-            width: 44,
-            height: 44,
+            width: 48,
+            height: 48,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             color: "#ffffff",
             cursor: "pointer",
+            transition: "all 0.2s ease",
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.18)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
         >
-          <X size={24} />
+          <X size={22} />
         </button>
       </div>
 
-      <div style={{ maxWidth: 520, width: "100%", margin: "0 auto" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(37,99,235,0.2)", padding: "6px 14px", borderRadius: 999, border: "1px solid rgba(59,130,246,0.3)", marginBottom: 16 }}>
-          <ShieldCheck size={16} color="#60a5fa" />
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#93c5fd" }}>
+      <div style={{ maxWidth: 540, width: "100%", margin: "0 auto" }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            background: "rgba(255, 72, 0, 0.15)",
+            padding: "6px 16px",
+            borderRadius: "var(--radius-full)",
+            border: "1px solid rgba(255, 72, 0, 0.35)",
+            marginBottom: 18,
+          }}
+        >
+          <Zap size={15} color="var(--rome-flame)" />
+          <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--rome-flame)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             Rome Dynamic Cryptographic Check-In
           </span>
         </div>
 
-        <h2 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: 8, letterSpacing: "-0.02em" }}>
+        <h2 style={{ fontSize: "2.2rem", fontWeight: 800, marginBottom: 8, letterSpacing: "-0.03em" }}>
           Scan to Check In & Refund
         </h2>
 
-        <p style={{ fontSize: "1rem", color: "#a1a1aa", marginBottom: 12 }}>
-          {event.title} • Session #{event.activeSessionId}
+        <p style={{ fontSize: "1rem", color: "var(--text-secondary)", marginBottom: 16 }}>
+          {event.title} • <span style={{ fontFamily: "var(--font-mono)", color: "var(--rome-amber)" }}>Session #{event.activeSessionId}</span>
         </p>
 
         {/* QR Canvas Box */}
         <div className="qr-box">
-          <canvas ref={canvasRef} style={{ display: "block", borderRadius: 12 }} />
+          <canvas ref={canvasRef} style={{ display: "block", borderRadius: 14 }} />
         </div>
 
         {/* Countdown Timer */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-          <Clock size={18} color="#60a5fa" />
-          <span style={{ fontSize: "1.05rem", fontWeight: 700 }}>
-            Refreshing in {secondsRemaining}s
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 20 }}>
+          <Clock size={17} color="var(--rome-flame)" />
+          <span style={{ fontSize: "1.05rem", fontWeight: 700, fontFamily: "var(--font-mono)" }}>
+            Rotating in <span style={{ color: "var(--rome-flame)" }}>{secondsRemaining}s</span>
           </span>
           <div
             style={{
-              width: 140,
+              width: 150,
               height: 6,
-              background: "rgba(255,255,255,0.15)",
-              borderRadius: 999,
+              background: "rgba(255,255,255,0.1)",
+              borderRadius: "var(--radius-full)",
               overflow: "hidden",
             }}
           >
@@ -136,7 +150,7 @@ export const FullscreenQRModal: React.FC<FullscreenQRModalProps> = ({
               style={{
                 width: `${(secondsRemaining / REFRESH_INTERVAL_SEC) * 100}%`,
                 height: "100%",
-                background: "#3b82f6",
+                background: "linear-gradient(90deg, var(--rome-flame), var(--rome-amber))",
                 transition: "width 1s linear",
               }}
             />
@@ -144,8 +158,18 @@ export const FullscreenQRModal: React.FC<FullscreenQRModalProps> = ({
         </div>
 
         {/* Instructions */}
-        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 20px", fontSize: "0.85rem", color: "#d4d4d8", lineHeight: 1.6 }}>
-          Point your phone camera at the QR code. You will be redirected to confirm check-in with your registered wallet. Your deposit will be refunded automatically on-chain.
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "var(--radius-lg)",
+            padding: "16px 24px",
+            fontSize: "0.88rem",
+            color: "var(--text-secondary)",
+            lineHeight: 1.6,
+          }}
+        >
+          Scan the QR with your phone camera. You will be redirected to confirm attendance with the wallet you used to reserve. Your USDC deposit will be refunded automatically on-chain with zero manual approval.
         </div>
       </div>
     </div>

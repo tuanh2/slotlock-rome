@@ -112,7 +112,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               height: 320,
               borderRadius: "var(--radius-lg)",
               overflow: "hidden",
-              background: "#eae8e1",
+              background: "var(--bg-card)",
               marginBottom: 24,
               boxShadow: "var(--shadow-sm)",
             }}
