@@ -61,11 +61,11 @@ export const HeroKeywordsTypewriter: React.FC = () => {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        color: "var(--rome-flame)",
+        color: "var(--royal-purple)",
         fontFamily: "var(--font-mono)",
         fontWeight: 700,
         letterSpacing: "0.02em",
-        textShadow: "0 0 20px rgba(255, 72, 0, 0.4)",
+        textShadow: "0 0 16px rgba(107, 33, 168, 0.25)",
       }}
     >
       {subText}

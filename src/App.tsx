@@ -24,6 +24,7 @@ import { OrganizerDashboard } from "./components/OrganizerDashboard";
 import { MyTickets } from "./components/MyTickets";
 import { CheckInPage } from "./components/CheckInPage";
 import { FullscreenQRModal } from "./components/FullscreenQRModal";
+import { SwimmingMantaOcean } from "./components/SwimmingMantaOcean";
 
 const cfg = configJson as unknown as RomeConfig;
 const CONTRACT_ADDRESS = (configJson as { slotlock?: Hex | null }).slotlock as Hex | null;
@@ -570,7 +571,8 @@ export default function App() {
   const selectedEvent = events.find((e) => e.id === selectedEventId) || events[0];
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", position: "relative" }}>
+      <SwimmingMantaOcean />
       <Navbar
         currentTab={currentTab}
         setCurrentTab={(tab) => {
