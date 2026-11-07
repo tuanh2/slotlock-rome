@@ -87,10 +87,9 @@ async function main() {
   const registered = await registerTransfer(
     {
       quote,
-      quoteId: quote.quoteId,
       step1TxHash: burnTxHash,
       userSettleSig,
-    },
+    } as any,
     { base: BRIDGE_API }
   );
 

@@ -34,10 +34,9 @@ export async function deploySlotLock(cfg: RomeConfig, account: Account): Promise
   try {
     const est = await pub.estimateContractGas({
       abi,
-      bytecode,
       args: [cfg.wusdc],
       account,
-    });
+    } as any);
     console.log(`Estimated deployment gas: ${est}`);
     gasLimit = (est * 13n) / 10n;
   } catch (e: any) {

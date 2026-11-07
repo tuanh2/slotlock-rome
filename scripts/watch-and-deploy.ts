@@ -30,7 +30,6 @@ async function main() {
     chainId: 200010,
     proxyUrl: "https://hadrian.testnet.romeprotocol.xyz/",
     solanaRpc: "https://api.devnet.solana.com",
-    solanaCluster: "devnet",
   });
 
   const pub = createPublicClient({ transport: http(cfg.proxyUrl) });
