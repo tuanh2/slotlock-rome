@@ -30,12 +30,28 @@ export async function deploySlotLock(cfg: RomeConfig, account: Account): Promise
   const gp = await pub.getGasPrice();
   console.log(`Current gas price: ${gp} wei`);
 
+  let gasLimit = 80_000_000n;
+  try {
+    const est = await pub.estimateContractGas({
+      abi,
+      bytecode,
+      args: [cfg.wusdc],
+      account,
+    });
+    console.log(`Estimated deployment gas: ${est}`);
+    gasLimit = (est * 13n) / 10n;
+  } catch (e: any) {
+    console.warn(`Gas estimation failed (${e.shortMessage || e.message}), using fallback gasLimit = 80,000,000`);
+    gasLimit = 80_000_000n;
+  }
+  console.log(`Using gasLimit: ${gasLimit}`);
+
   const hash = await wallet.deployContract({
     abi,
     bytecode,
     args: [cfg.wusdc],
-    gas: 90_000_000n,
-    maxFeePerGas: (gp * 3n) / 2n,
+    gas: gasLimit,
+    maxFeePerGas: (gp * 105n) / 100n,
     maxPriorityFeePerGas: 0n,
   });
 
@@ -77,7 +93,9 @@ async function main() {
   console.log(`\nNext: run 'npm run gen-config' to update frontend build config.`);
 }
 
-main().catch((err) => {
-  console.error("Deploy failed:", err);
-  process.exit(1);
-});
+if (process.argv[1]?.replace(/\\/g, "/").endsWith("scripts/deploy-slotlock.ts")) {
+  main().catch((err) => {
+    console.error("Deploy failed:", err);
+    process.exit(1);
+  });
+}
