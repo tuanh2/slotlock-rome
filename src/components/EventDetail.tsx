@@ -12,10 +12,12 @@ import {
   ExternalLink,
   UserCheck,
   CheckCircle2,
+  Share2,
 } from "lucide-react";
 import { formatUnits, type Hex } from "viem";
 import type { EventData, TicketData } from "../../lib/slotlock";
 import type { RomeConfig } from "../../lib/config";
+import type { ShareTicketData } from "./ShareTicketCardModal";
 
 interface EventDetailProps {
   event: EventData;
@@ -29,6 +31,7 @@ interface EventDetailProps {
   onCancelRegistration: () => void;
   onClaimRefund: () => void;
   onOpenDashboard: () => void;
+  onOpenShareCard?: (data: ShareTicketData) => void;
   isActionLoading: boolean;
   actionMessage: string;
 }
@@ -45,6 +48,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   onCancelRegistration,
   onClaimRefund,
   onOpenDashboard,
+  onOpenShareCard,
   isActionLoading,
   actionMessage,
 }) => {
@@ -151,6 +155,22 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 <ExternalLink size={12} />
               </a>
               {isOrganizer && <span className="badge badge-green">You are host</span>}
+              {event.txHash && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 6 }}>
+                  <span style={{ color: "var(--text-muted)" }}>• Tx:</span>
+                  <a
+                    href={`${config.explorerUrl}/tx/${event.txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mono-addr"
+                    style={{ color: "var(--accent)", display: "inline-flex", alignItems: "center", gap: 4 }}
+                    title="View creation transaction on Rome Hadrian Explorer"
+                  >
+                    {truncate(event.txHash)}
+                    <ExternalLink size={12} />
+                  </a>
+                </span>
+              )}
             </div>
           </div>
 
@@ -455,6 +475,34 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     : `Deposit ${depositHuman} USDC to Reserve`}
                 </button>
               )}
+
+              {/* Share Card Trigger */}
+              <button
+                className="btn-secondary"
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginTop: 6,
+                  fontFamily: "'Departure Mono', monospace",
+                  fontSize: "0.82rem",
+                }}
+                onClick={() => {
+                  onOpenShareCard?.({
+                    mode: isCheckedIn ? "checked_in" : isRegistered ? "registered" : "created",
+                    event,
+                    userAddress,
+                    txHash: event.txHash,
+                    depositHuman,
+                    refundedHuman: depositHuman,
+                  });
+                }}
+              >
+                <Share2 size={13} />
+                <span>[!] SHARE TICKET CARD</span>
+              </button>
             </div>
 
             <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 14, textAlign: "center", lineHeight: 1.4 }}>

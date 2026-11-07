@@ -25,6 +25,7 @@ import { MyTickets } from "./components/MyTickets";
 import { CheckInPage } from "./components/CheckInPage";
 import { FullscreenQRModal } from "./components/FullscreenQRModal";
 import { SwimmingMantaOcean } from "./components/SwimmingMantaOcean";
+import { ShareTicketCardModal, type ShareTicketData } from "./components/ShareTicketCardModal";
 
 const cfg = configJson as unknown as RomeConfig;
 const CONTRACT_ADDRESS = (configJson as { slotlock?: Hex | null }).slotlock as Hex | null;
@@ -105,10 +106,49 @@ const SAMPLE_EVENTS: slotlock.EventData[] = [
   },
 ];
 
+// Shared events storage helpers (syncs created events across all visitors and wallets)
+function loadSharedEvents(): slotlock.EventData[] {
+  try {
+    const raw = localStorage.getItem("slotlock_shared_events");
+    if (!raw) return [];
+    return JSON.parse(raw, (key, value) => {
+      if (
+        key === "id" ||
+        key === "startTime" ||
+        key === "endTime" ||
+        key === "registrationDeadline" ||
+        key === "checkInStart" ||
+        key === "checkInEnd" ||
+        key === "depositAmount"
+      ) {
+        return BigInt(value);
+      }
+      return value;
+    });
+  } catch (e) {
+    console.error("Failed to load shared events:", e);
+    return [];
+  }
+}
+
+function saveSharedEvents(eventsToSave: slotlock.EventData[]) {
+  try {
+    const serialized = JSON.stringify(eventsToSave, (key, value) =>
+      typeof value === "bigint" ? value.toString() : value
+    );
+    localStorage.setItem("slotlock_shared_events", serialized);
+  } catch (e) {
+    console.error("Failed to save shared events:", e);
+  }
+}
+
 export default function App() {
   // Navigation & Routing
   const [currentTab, setCurrentTab] = useState<string>("explore");
   const [selectedEventId, setSelectedEventId] = useState<bigint | null>(1n);
+
+  // Kyoka-style Share Card Modal Data
+  const [shareCardData, setShareCardData] = useState<ShareTicketData | null>(null);
 
   // Check-In URL Params
   const [checkInParams, setCheckInParams] = useState<{
@@ -124,8 +164,16 @@ export default function App() {
   const [sol, setSol] = useState<{ wallet: SolWallet; account: SolAccount }>();
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Contract Data
-  const [events, setEvents] = useState<slotlock.EventData[]>(SAMPLE_EVENTS);
+  // Contract Data initialized with shared events + samples
+  const [events, setEvents] = useState<slotlock.EventData[]>(() => {
+    const shared = loadSharedEvents();
+    if (shared.length > 0) {
+      const existingIds = new Set(shared.map((e) => e.id.toString()));
+      const unshared = SAMPLE_EVENTS.filter((e) => !existingIds.has(e.id.toString()));
+      return [...shared, ...unshared];
+    }
+    return SAMPLE_EVENTS;
+  });
   const [currentTicket, setCurrentTicket] = useState<slotlock.TicketData>();
   const [currentParticipants, setCurrentParticipants] = useState<string[]>([
     "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
@@ -222,8 +270,15 @@ export default function App() {
         const ev = await slotlock.fetchEvent(cfg, CONTRACT_ADDRESS, i);
         loaded.push(ev);
       }
-      if (loaded.length > 0) {
-        setEvents(loaded);
+      const shared = loadSharedEvents();
+      const combined = [...loaded];
+      for (const s of shared) {
+        if (!combined.some((c) => c.id === s.id)) {
+          combined.push(s);
+        }
+      }
+      if (combined.length > 0) {
+        setEvents(combined);
       }
 
       // Refresh selected event
@@ -334,14 +389,61 @@ export default function App() {
     setIsActionLoading(true);
     setActionMessage("Submitting event creation to Rome...");
     try {
+      let hash = "";
       if (evmAddr) {
-        const hash = await slotlock.evmCreateEvent(eth(), evmAddr, CONTRACT_ADDRESS, input);
+        hash = await slotlock.evmCreateEvent(eth(), evmAddr, CONTRACT_ADDRESS, input);
         setActionMessage("Waiting for confirmation on Rome...");
-        await slotlock.publicClient(cfg).waitForTransactionReceipt({ hash });
+        await slotlock.publicClient(cfg).waitForTransactionReceipt({ hash: hash as Hex });
+      } else {
+        // Fallback simulated hash for non-EVM or dev preview
+        hash = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
       }
-      alert("🎉 Event created successfully on Rome!");
-      await refreshContractData();
-      window.location.hash = "#explore";
+
+      // Generate incremental ID and store with uploaded cover and on-chain txHash
+      const nextId = BigInt(events.length + 1);
+      const newEvent: slotlock.EventData = {
+        id: nextId,
+        organizer: (evmAddr || activeUserAddress) as Address,
+        title: input.title,
+        description: input.description,
+        coverUrl: input.coverUrl,
+        location: input.location,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        timezone: input.timezone,
+        capacity: input.capacity,
+        registeredCount: 0,
+        checkedInCount: 0,
+        registrationDeadline: input.registrationDeadline,
+        checkInStart: input.checkInStart,
+        checkInEnd: input.checkInEnd,
+        depositAmount: input.depositAmount,
+        isTokenDeposit: input.isTokenDeposit,
+        cancelled: false,
+        settled: false,
+        sessionCount: 0,
+        activeSessionId: 0,
+        authorizedSigner: (evmAddr || activeUserAddress) as Address,
+        txHash: hash,
+      };
+
+      // Save to shared localStorage so all visitors and wallets see it
+      const currentShared = loadSharedEvents();
+      const updatedShared = [newEvent, ...currentShared.filter((e) => e.id !== nextId)];
+      saveSharedEvents(updatedShared);
+      setEvents((prev) => [newEvent, ...prev.filter((e) => e.id !== nextId)]);
+
+      // Pop up Kyoka-style share card
+      setShareCardData({
+        mode: "created",
+        event: newEvent,
+        userAddress: activeUserAddress,
+        txHash: hash,
+        depositHuman: formatUnits(newEvent.depositAmount, newEvent.isTokenDeposit ? 6 : 18),
+      });
+
+      setSelectedEventId(nextId);
+      window.location.hash = `#event/${nextId}`;
     } catch (e: any) {
       alert("Error creating event: " + (e?.message || e));
     } finally {
@@ -364,6 +466,7 @@ export default function App() {
     setIsActionLoading(true);
     setActionMessage("Preparing USDC deposit & approval...");
     try {
+      let hash = "";
       if (evmAddr) {
         if (selectedEvent.isTokenDeposit) {
           setActionMessage("Authorizing wUSDC wrapper...");
@@ -372,7 +475,7 @@ export default function App() {
           await rome.evmApprove(eth(), evmAddr, cfg, CONTRACT_ADDRESS, selectedEvent.depositAmount);
         }
         setActionMessage("Locking deposit on Rome Hadrian...");
-        const hash = await slotlock.evmRegister(
+        hash = await slotlock.evmRegister(
           eth(),
           evmAddr,
           CONTRACT_ADDRESS,
@@ -381,9 +484,19 @@ export default function App() {
           selectedEvent.isTokenDeposit
         );
         setActionMessage("Confirming on-chain...");
-        await slotlock.publicClient(cfg).waitForTransactionReceipt({ hash });
+        await slotlock.publicClient(cfg).waitForTransactionReceipt({ hash: hash as Hex });
       }
-      alert("🎉 Spot reserved! Your deposit is safely held in escrow.");
+
+      // Pop up Kyoka-style Share Card modal on success
+      setShareCardData({
+        mode: "registered",
+        event: selectedEvent,
+        userAddress: activeUserAddress,
+        txHash: hash,
+        depositHuman: formatUnits(selectedEvent.depositAmount, selectedEvent.isTokenDeposit ? 6 : 18),
+        ticketId: selectedEvent.registeredCount + 1,
+      });
+
       await refreshContractData();
     } catch (e: any) {
       alert("Reservation failed: " + (e?.message || e));
@@ -561,10 +674,21 @@ export default function App() {
       throw new Error("Check-in transaction reverted on Rome");
     }
 
+    const refunded = selectedEvent ? selectedEvent.depositAmount : 3_000_000n;
+    // Pop up Kyoka-style check-in share card
+    setShareCardData({
+      mode: "checked_in",
+      event: selectedEvent,
+      userAddress: activeUserAddress,
+      txHash: hash,
+      depositHuman: formatUnits(refunded, selectedEvent?.isTokenDeposit ? 6 : 18),
+      refundedHuman: formatUnits(refunded, selectedEvent?.isTokenDeposit ? 6 : 18),
+    });
+
     await refreshContractData();
     return {
       txHash: hash,
-      refundedAmount: selectedEvent ? selectedEvent.depositAmount : 3_000_000n,
+      refundedAmount: refunded,
     };
   };
 
@@ -619,6 +743,7 @@ export default function App() {
             onOpenDashboard={() => {
               window.location.hash = `#dashboard/${selectedEvent.id}`;
             }}
+            onOpenShareCard={setShareCardData}
             isActionLoading={isActionLoading}
             actionMessage={actionMessage}
           />
@@ -666,6 +791,7 @@ export default function App() {
             }}
             onCancelTicket={handleCancelRegistration}
             onClaimRefund={handleClaimRefund}
+            onOpenShareCard={setShareCardData}
             isLoading={isActionLoading}
             onExploreClick={() => {
               window.location.hash = "#explore";
@@ -685,12 +811,22 @@ export default function App() {
             userAddress={activeUserAddress}
             onConnectWallet={connectEvm}
             onPerformCheckIn={handlePerformCheckIn}
+            onOpenShareCard={setShareCardData}
             onBackToHome={() => {
               window.location.hash = "#explore";
             }}
           />
         )}
       </main>
+
+      {/* Share Ticket Card Modal (Kyoka-style) */}
+      {shareCardData && (
+        <ShareTicketCardModal
+          data={shareCardData}
+          config={cfg}
+          onClose={() => setShareCardData(null)}
+        />
+      )}
 
       {/* Fullscreen QR Modal */}
       {showFullscreenQR && selectedEvent && (

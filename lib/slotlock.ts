@@ -43,6 +43,7 @@ export interface EventData {
   sessionCount: number;
   activeSessionId: number;
   authorizedSigner: Address;
+  txHash?: string;
 }
 
 export interface TicketData {

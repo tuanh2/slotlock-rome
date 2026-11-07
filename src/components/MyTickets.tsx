@@ -1,8 +1,9 @@
 import React from "react";
-import { Ticket, Calendar, MapPin, Coins, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { Ticket, Calendar, MapPin, Coins, CheckCircle2, AlertCircle, ArrowRight, Share2 } from "lucide-react";
 import { formatUnits } from "viem";
 import type { EventData, TicketData } from "../../lib/slotlock";
 import type { RomeConfig } from "../../lib/config";
+import type { ShareTicketData } from "./ShareTicketCardModal";
 
 interface UserTicketItem {
   event: EventData;
@@ -16,6 +17,7 @@ interface MyTicketsProps {
   onSelectEvent: (eventId: bigint) => void;
   onCancelTicket: (eventId: bigint) => Promise<void>;
   onClaimRefund: (eventId: bigint) => Promise<void>;
+  onOpenShareCard?: (data: ShareTicketData) => void;
   isLoading: boolean;
   onExploreClick: () => void;
 }
@@ -27,6 +29,7 @@ export const MyTickets: React.FC<MyTicketsProps> = ({
   onSelectEvent,
   onCancelTicket,
   onClaimRefund,
+  onOpenShareCard,
   isLoading,
   onExploreClick,
 }) => {
@@ -171,6 +174,31 @@ export const MyTickets: React.FC<MyTicketsProps> = ({
                       Claim Refund
                     </button>
                   )}
+
+                  <button
+                    className="btn-secondary"
+                    onClick={() => {
+                      onOpenShareCard?.({
+                        mode: ticket.status === 2 ? "checked_in" : "registered",
+                        event,
+                        userAddress,
+                        txHash: event.txHash,
+                        depositHuman,
+                        refundedHuman: depositHuman,
+                      });
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontFamily: "'Departure Mono', monospace",
+                      fontSize: "0.82rem",
+                    }}
+                    title="Open shareable card"
+                  >
+                    <Share2 size={13} />
+                    <span>[!] Share</span>
+                  </button>
 
                   <button
                     className="btn-primary"

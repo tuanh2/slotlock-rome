@@ -9,6 +9,7 @@ import {
   Wallet,
   Clock,
   Sparkles,
+  Share2,
 } from "lucide-react";
 import { formatUnits, type Hex } from "viem";
 import type { EventData, TicketData } from "../../lib/slotlock";
@@ -25,6 +26,7 @@ interface CheckInPageProps {
   userAddress?: string;
   onConnectWallet: () => void;
   onPerformCheckIn: () => Promise<{ txHash: string; refundedAmount: bigint }>;
+  onOpenShareCard?: (data: any) => void;
   onBackToHome: () => void;
 }
 
@@ -39,6 +41,7 @@ export const CheckInPage: React.FC<CheckInPageProps> = ({
   userAddress,
   onConnectWallet,
   onPerformCheckIn,
+  onOpenShareCard,
   onBackToHome,
 }) => {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
@@ -58,6 +61,15 @@ export const CheckInPage: React.FC<CheckInPageProps> = ({
     try {
       const res = await onPerformCheckIn();
       setSuccessResult(res);
+      if (event) {
+        onOpenShareCard?.({
+          mode: "checked_in",
+          event,
+          userAddress,
+          txHash: res.txHash,
+          refundedHuman: formatUnits(res.refundedAmount, event.isTokenDeposit ? 6 : 18),
+        });
+      }
     } catch (err: any) {
       console.error("Check-in error:", err);
       setErrorMsg(err?.message || "Check-in failed. Please try again.");
@@ -121,16 +133,43 @@ export const CheckInPage: React.FC<CheckInPageProps> = ({
               Your spot is verified and your <b>{formatUnits(successResult.refundedAmount, event?.isTokenDeposit ? 6 : 18)} USDC</b> deposit has been refunded back to your wallet.
             </p>
 
-            <a
-              href={`${config.explorerUrl}/tx/${successResult.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-secondary"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255, 255, 255, 0.06)", fontSize: "0.86rem" }}
-            >
-              <span>View On-Chain Settlement ({truncate(successResult.txHash)})</span>
-              <ExternalLink size={14} />
-            </a>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 12 }}>
+              <a
+                href={`${config.explorerUrl}/tx/${successResult.txHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255, 255, 255, 0.06)", fontSize: "0.86rem" }}
+              >
+                <span>Explorer ({truncate(successResult.txHash)})</span>
+                <ExternalLink size={14} />
+              </a>
+
+              <button
+                className="btn-accent"
+                onClick={() => {
+                  if (event) {
+                    onOpenShareCard?.({
+                      mode: "checked_in",
+                      event,
+                      userAddress,
+                      txHash: successResult.txHash,
+                      refundedHuman: formatUnits(successResult.refundedAmount, event.isTokenDeposit ? 6 : 18),
+                    });
+                  }
+                }}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontFamily: "'Departure Mono', monospace",
+                  fontSize: "0.86rem",
+                }}
+              >
+                <Share2 size={14} />
+                <span>[!] Share Pass Card</span>
+              </button>
+            </div>
           </div>
         ) : (
           <>
