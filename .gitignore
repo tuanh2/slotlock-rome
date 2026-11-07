@@ -4,6 +4,9 @@ dist
 .env.*
 *.local
 artifacts
+!artifacts/SlotLock.json
 cache
 _zip
 *.log
+
+.vercel

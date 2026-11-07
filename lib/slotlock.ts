@@ -17,9 +17,8 @@ import {
 } from "viem";
 import { Connection, PublicKey } from "@solana/web3.js";
 import type { RomeConfig } from "./config.js";
-import slotLockArtifact from "../artifacts/SlotLock.json" with { type: "json" };
-
-export const SLOTLOCK_ABI = slotLockArtifact.abi as readonly any[];
+import { SLOTLOCK_ABI } from "./slotlockAbi.js";
+export { SLOTLOCK_ABI };
 
 export interface EventData {
   id: bigint;

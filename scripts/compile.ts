@@ -54,6 +54,12 @@ export function compileSlotLock() {
     JSON.stringify({ abi, bytecode }, null, 2)
   );
 
+  const libDir = resolve(__dirname, "../lib");
+  writeFileSync(
+    resolve(libDir, "slotlockAbi.ts"),
+    "export const SLOTLOCK_ABI = " + JSON.stringify(abi, null, 2) + " as const;\n"
+  );
+
   console.log("SlotLock.sol compiled successfully!");
   console.log(`Bytecode size: ${bytecode.length / 2 - 1} bytes`);
   return { abi, bytecode };
