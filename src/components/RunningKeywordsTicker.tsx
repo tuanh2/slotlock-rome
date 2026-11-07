@@ -62,9 +62,10 @@ export const HeroKeywordsTypewriter: React.FC = () => {
         display: "inline-flex",
         alignItems: "center",
         color: "var(--royal-purple)",
-        fontFamily: "var(--font-mono)",
+        fontFamily: "var(--font-pix)",
+        fontSize: "1.15rem",
         fontWeight: 700,
-        letterSpacing: "0.02em",
+        letterSpacing: "0.05em",
         textShadow: "0 0 16px rgba(107, 33, 168, 0.25)",
       }}
     >
